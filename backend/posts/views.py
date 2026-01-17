@@ -39,24 +39,31 @@ class LikePostView(APIView):
     def post(self, request, pk):
         post = get_object_or_404(Post, pk=pk)
 
-        if post.liked_by.filter(pk=request.user.pk).exists():
-            post.liked_by.remove(request.user)
+        user_id = request.user.id
+        liked_ids = post.liked_by or []
+        disliked_ids = post.disliked_by or []
+
+        if user_id in liked_ids:
+            liked_ids.remove(user_id)
             user_liked = False
         else:
-            post.liked_by.add(request.user)
-            post.disliked_by.remove(request.user)
+            liked_ids.append(user_id)
             user_liked = True
+            if user_id in disliked_ids:
+                disliked_ids.remove(user_id)
 
-        post.likes = post.liked_by.count()
-        post.dislikes = post.disliked_by.count()
-        post.save(update_fields=["likes", "dislikes"])
+        post.liked_by = liked_ids
+        post.disliked_by = disliked_ids
+        post.likes = len(liked_ids)
+        post.dislikes = len(disliked_ids)
+        post.save(update_fields=["liked_by", "disliked_by", "likes", "dislikes"])
 
         return Response(
             {
                 "likes": post.likes,
                 "dislikes": post.dislikes,
                 "user_liked": user_liked,
-                "user_disliked": post.disliked_by.filter(pk=request.user.pk).exists(),
+                "user_disliked": user_id in disliked_ids,
             }
         )
 
@@ -67,23 +74,30 @@ class DislikePostView(APIView):
     def post(self, request, pk):
         post = get_object_or_404(Post, pk=pk)
 
-        if post.disliked_by.filter(pk=request.user.pk).exists():
-            post.disliked_by.remove(request.user)
+        user_id = request.user.id
+        liked_ids = post.liked_by or []
+        disliked_ids = post.disliked_by or []
+
+        if user_id in disliked_ids:
+            disliked_ids.remove(user_id)
             user_disliked = False
         else:
-            post.disliked_by.add(request.user)
-            post.liked_by.remove(request.user)
+            disliked_ids.append(user_id)
             user_disliked = True
+            if user_id in liked_ids:
+                liked_ids.remove(user_id)
 
-        post.likes = post.liked_by.count()
-        post.dislikes = post.disliked_by.count()
-        post.save(update_fields=["likes", "dislikes"])
+        post.liked_by = liked_ids
+        post.disliked_by = disliked_ids
+        post.likes = len(liked_ids)
+        post.dislikes = len(disliked_ids)
+        post.save(update_fields=["liked_by", "disliked_by", "likes", "dislikes"])
 
         return Response(
             {
                 "likes": post.likes,
                 "dislikes": post.dislikes,
-                "user_liked": post.liked_by.filter(pk=request.user.pk).exists(),
+                "user_liked": user_id in liked_ids,
                 "user_disliked": user_disliked,
             }
         )

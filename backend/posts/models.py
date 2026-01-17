@@ -6,16 +6,8 @@ class Post(models.Model):
     description = models.TextField(blank=True)
     image = models.ImageField(upload_to="posts/", null=True, blank=True)
 
-    liked_by = models.ManyToManyField(
-        settings.AUTH_USER_MODEL,
-        related_name="liked_posts",
-        blank=True,
-    )
-    disliked_by = models.ManyToManyField(
-        settings.AUTH_USER_MODEL,
-        related_name="disliked_posts",
-        blank=True,
-    )
+    liked_by = models.JSONField(default=list, blank=True)
+    disliked_by = models.JSONField(default=list, blank=True)
 
     likes = models.PositiveIntegerField(default=0)
     dislikes = models.PositiveIntegerField(default=0)

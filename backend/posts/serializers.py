@@ -11,13 +11,17 @@ class PostSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         if not request or not request.user or not request.user.is_authenticated:
             return False
-        return obj.liked_by.filter(pk=request.user.pk).exists()
+        user_id = request.user.id
+        liked_ids = obj.liked_by or []
+        return user_id in liked_ids
 
     def get_user_disliked(self, obj):
         request = self.context.get("request")
         if not request or not request.user or not request.user.is_authenticated:
             return False
-        return obj.disliked_by.filter(pk=request.user.pk).exists()
+        user_id = request.user.id
+        disliked_ids = obj.disliked_by or []
+        return user_id in disliked_ids
 
     def validate(self, attrs):
         description = (attrs.get("description") or "").strip()
@@ -40,4 +44,4 @@ class PostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = "__all__"
-        read_only_fields = ["user", "likes", "dislikes"]
+        read_only_fields = ["user", "likes", "dislikes", "liked_by", "disliked_by"]
